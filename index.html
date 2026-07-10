@@ -83,6 +83,10 @@
             <p class="text-xs text-indigo-200">Asisten Ibu Dewi Ratna Sari</p>
           </div>
         </div>
+        <!-- Settings Gear Button -->
+        <button onclick="openSettingsModal()" class="p-2 hover:bg-indigo-600 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-300">
+          <i data-lucide="settings" class="w-5 h-5 text-indigo-100"></i>
+        </button>
       </div>
     </header>
 
@@ -329,6 +333,33 @@
       </section>
     </main>
 
+    <!-- SETTINGS MODAL (API KEY) -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 no-print transition-opacity">
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden transform transition-all">
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+          <h3 class="font-bold text-slate-800 flex items-center space-x-2">
+            <i data-lucide="key" class="w-4 h-4 text-indigo-600"></i>
+            <span>Pengaturan API Key</span>
+          </h3>
+          <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 focus:outline-none">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <div class="p-5 space-y-4">
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Sistem membutuhkan <strong>Gemini API Key</strong> yang valid untuk bisa memproses tugas pembuatan materi secara otomatis. Key akan tersimpan secara lokal dan aman di browser ini.
+          </p>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5">API Key Gemini</label>
+            <input type="password" id="api-key-input" placeholder="Masukkan API Key (AIzaSy...)" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono">
+          </div>
+          <button onclick="saveApiKey()" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold rounded-xl py-2.5 text-sm transition-all shadow-md shadow-indigo-100">
+            Simpan Konfigurasi
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- LOADING SCREEN -->
     <div id="loading-overlay" class="hidden absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center space-y-4 no-print">
       <div class="relative w-16 h-16">
@@ -542,7 +573,6 @@
 
     // ==========================================
     // DATABASE SILABUS (REKAP MATERI) PEDOMAN KELAS 7, 8, & 9
-    // Berpedoman pada data gambar dan file Kelas8.xlsx serta Kelas9.xlsx
     // ==========================================
     const SYLLABUS_DATA = {
       "7": {
@@ -619,9 +649,52 @@
       try { updateMateriList('modul'); } catch(e) { console.error("Error modul setup: " + e.message); }
       try { setTipeOutput('Soal Evaluasi'); } catch(e) {}
       try { buildKurikulumView(); } catch(e) {}
+
+      // Cek ketersediaan API Key di Local Storage
+      const savedKey = localStorage.getItem('gemini_api_key');
+      if (!savedKey) {
+        // Otomatis buka jika belum ada key yang tersimpan
+        setTimeout(() => openSettingsModal(), 500);
+      }
     };
 
-    // Logika UI Rekap (Sembunyikan/Tampilkan Pilihan Bulan)
+    // ==========================================
+    // LOGIKA UI MODAL PENGATURAN API KEY
+    // ==========================================
+    function openSettingsModal() {
+      const modal = document.getElementById('settings-modal');
+      const input = document.getElementById('api-key-input');
+      const savedKey = localStorage.getItem('gemini_api_key');
+      
+      // Jika key sudah ada di memori, tampilkan ke input
+      if (savedKey) {
+        input.value = savedKey;
+      }
+      
+      modal.classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      const modal = document.getElementById('settings-modal');
+      modal.classList.add('hidden');
+    }
+
+    function saveApiKey() {
+      const input = document.getElementById('api-key-input');
+      const key = input.value.trim();
+      
+      if (key) {
+        localStorage.setItem('gemini_api_key', key);
+        closeSettingsModal();
+        showToast("API Key berhasil disimpan!", "success");
+      } else {
+        showToast("API Key tidak boleh kosong.", "error");
+      }
+    }
+
+    // ==========================================
+    // LOGIKA ANTARMUKA LAINNYA
+    // ==========================================
     function toggleRekapBulan() {
       const isTahun = document.getElementById('rekap-tahun').checked;
       const containerBulan = document.getElementById('container-rekap-bulan');
@@ -632,7 +705,6 @@
       }
     }
 
-    // Fungsi beralih TAB (SPA) secara aman
     function switchTab(tabId) {
       currentTab = tabId;
       
@@ -665,7 +737,6 @@
       }
     }
 
-    // Update List Dropdown Materi Berdasarkan Filter Kelas & Semester
     function updateMateriList(tabPrefix) {
       try {
         const kelasEl = document.getElementById(`${tabPrefix}-kelas`);
@@ -679,7 +750,6 @@
 
         materiSelect.innerHTML = '';
         
-        // Proteksi jika data kurikulum bermasalah atau kosong
         if (!CURRICULUM_DATA[kelasVal] || !CURRICULUM_DATA[kelasVal][semesterVal]) {
           return;
         }
@@ -698,7 +768,6 @@
       }
     }
 
-    // Saat Materi dipilih, tampilkan otomatis info grammar & CP
     function onMateriSelect(tabPrefix) {
       try {
         const kelasEl = document.getElementById(`${tabPrefix}-kelas`);
@@ -731,7 +800,6 @@
       }
     }
 
-    // Menandai format/tipe output yang dipilih pada menu Harian
     function setTipeOutput(tipe) {
       selectedTipeOutput = tipe;
       document.querySelectorAll('.tipe-output-btn').forEach(btn => {
@@ -752,7 +820,6 @@
       }
     }
 
-    // Membangun tampilan daftar referensi kurikulum di Tab Referensi
     function buildKurikulumView() {
       filterKurikulum('7');
     }
@@ -800,7 +867,6 @@
       });
     }
 
-    // Toast Notification Maker
     function showToast(message, type = 'info') {
       const toast = document.getElementById('toast');
       const toastMsg = document.getElementById('toast-message');
@@ -812,12 +878,20 @@
       toast.classList.remove('opacity-0', 'pointer-events-none');
       toast.classList.add('opacity-100');
 
-      // Set warna ikon
+      // Set warna ikon bergantung tipe
       if (type === 'error') {
         toastIcon.className = "w-4 h-4 text-red-500";
+        toastIcon.setAttribute("data-lucide", "alert-circle");
+      } else if (type === 'success') {
+        toastIcon.className = "w-4 h-4 text-emerald-400";
+        toastIcon.setAttribute("data-lucide", "check-circle-2");
       } else {
         toastIcon.className = "w-4 h-4 text-indigo-400";
+        toastIcon.setAttribute("data-lucide", "info");
       }
+      
+      // Update the icon safely
+      if (typeof lucide !== 'undefined') lucide.createIcons();
 
       setTimeout(() => {
         toast.classList.remove('opacity-100');
@@ -825,7 +899,6 @@
       }, 4000);
     }
 
-    // Melakukan request Generate Konten (Harian/Modul)
     function generateMaterial(mode) {
       try {
         const kelas = document.getElementById(`${mode}-kelas`).value;
@@ -854,7 +927,6 @@
           custom: customInput
         };
 
-        // Reset orientasi ke portrait (default)
         isCurrentOutputLandscape = false;
         triggerBackend(payload);
       } catch (err) {
@@ -862,7 +934,6 @@
       }
     }
 
-    // Melakukan request Generate Konten Khusus (Rekap Materi / Silabus)
     function generateRekap() {
       const kelas = document.getElementById('rekap-kelas').value;
       const isTahun = document.getElementById('rekap-tahun').checked;
@@ -892,18 +963,23 @@ Buatkan tabel Markdown dengan kolom: Week, Topic Breakdown, Interactive Method, 
         tipe: "Rekap Materi Khusus (Lihat instruksi detail pada Materi Utama)"
       };
 
-      // Set orientasi menjadi landscape untuk rekap
       isCurrentOutputLandscape = true;
       triggerBackend(payload);
     }
 
-    // Fungsi Utama Eksekusi Backend - Terhubung Langsung ke API (Bekerja secara native)
     async function triggerBackend(payload) {
+      // Pengecekan API Key sebelum menembak proses generate AI
+      const apiKey = localStorage.getItem('gemini_api_key');
+      if (!apiKey) {
+        showToast("Mohon masukkan API Key Gemini Anda di pengaturan.", "error");
+        openSettingsModal();
+        return;
+      }
+
       document.getElementById('loading-overlay').classList.remove('hidden');
 
       let promptText = "";
       
-      // Susun prompt sangat spesifik agar hasil lebih jelas, rapi, dan tepat sasaran
       if (payload.tipe === "Rekap Materi Khusus (Lihat instruksi detail pada Materi Utama)") {
          promptText = payload.materi; 
       } else {
@@ -960,8 +1036,7 @@ Struktur Wajib:
 Hasilkan keseluruhan modul dalam format Markdown murni yang terstruktur rapi, elegan, dan profesional.`;
         }
       }
-
-      const apiKey = ""; 
+      
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
       const delays = [1000, 2000, 4000, 8000, 16000];
       let success = false;
@@ -979,6 +1054,10 @@ Hasilkan keseluruhan modul dalam format Markdown murni yang terstruktur rapi, el
           });
 
           if (!response.ok) {
+            // Tangkap jika terjadi invalid API Key
+            if (response.status === 400 || response.status === 403) {
+                throw new Error("API_KEY_INVALID");
+            }
             if (i < 5) { await new Promise(r => setTimeout(r, delays[i])); continue; }
             throw new Error(`API Error: ${response.status}`);
           }
@@ -988,6 +1067,12 @@ Hasilkan keseluruhan modul dalam format Markdown murni yang terstruktur rapi, el
           success = true;
           break;
         } catch (error) {
+          if (error.message === "API_KEY_INVALID") {
+             document.getElementById('loading-overlay').classList.add('hidden');
+             showToast("API Key salah atau tidak memiliki akses. Periksa kembali API Key Anda.", "error");
+             setTimeout(() => openSettingsModal(), 1500);
+             return;
+          }
           if (i < 5) { await new Promise(r => setTimeout(r, delays[i])); continue; }
           console.error(error);
         }
@@ -996,15 +1081,13 @@ Hasilkan keseluruhan modul dalam format Markdown murni yang terstruktur rapi, el
       document.getElementById('loading-overlay').classList.add('hidden');
       
       if(success && finalContent) {
-          // Bersihkan wrapper backticks markdown yang sering dibawa oleh AI
           finalContent = finalContent.replace(/^```(markdown|md)\n/im, '').replace(/```\n*$/i, '');
           openPreview(finalContent);
-      } else {
+      } else if(error.message !== "API_KEY_INVALID") {
           showToast("Gagal terhubung dan menghasilkan materi. Silakan coba lagi.", "error");
       }
     }
 
-    // Membuka Tampilan Pratinjau Dokumen secara aman
     function openPreview(markdownText) {
       const outputArea = document.getElementById('output-content');
       const printArea = document.getElementById('print-content-rendered');
@@ -1013,7 +1096,6 @@ Hasilkan keseluruhan modul dalam format Markdown murni yang terstruktur rapi, el
 
       let renderedHtml = markdownText;
       
-      // Jika Marked parser gagal termuat, gunakan basic parser agar tidak crash
       if (typeof marked !== 'undefined' && marked.parse) {
         renderedHtml = marked.parse(markdownText);
       } else {
@@ -1031,13 +1113,10 @@ Hasilkan keseluruhan modul dalam format Markdown murni yang terstruktur rapi, el
       if (previewSec) previewSec.classList.add('hidden');
     }
 
-    // Melakukan print dokumen (Mendukung cetak Landscape dinamis)
     function printResult() {
-      // Hapus style landscape sebelumnya jika ada
       const existingStyle = document.getElementById('landscape-print-style');
       if (existingStyle) existingStyle.remove();
 
-      // Tambahkan rule landscape jika flag bernilai true
       if (isCurrentOutputLandscape) {
         const style = document.createElement('style');
         style.id = 'landscape-print-style';
