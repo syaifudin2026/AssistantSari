@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Asisten Ibu Dewi Ratna Sari - MTs Al-Islam Kapas</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts & Lucide Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Markdown Parser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    /* Pengaturan Cetak PDF */
+    @media print {
+      body { background-color: white !important; color: black !important; }
+      .no-print { display: none !important; }
+      .print-container { padding: 0 !important; margin: 0 !important; box-shadow: none !important; border: none !important; width: 100% !important; }
+      table { width: 100% !important; border-collapse: collapse !important; page-break-inside: avoid !important; }
+      th, td { border: 1px solid #111111 !important; padding: 8px !important; text-align: left !important; }
+      h1, h2, h3 { page-break-after: avoid !important; }
+    }
+    .content-area { height: calc(100vh - 64px); }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-indigo-100 flex flex-col min-h-screen">
+
+  <div class="flex-grow pb-16 md:pb-20 max-w-lg mx-auto w-full bg-white min-h-screen shadow-md flex flex-col relative">
+    
+    <!-- HEADER -->
+    <header class="bg-gradient-to-r from-indigo-700 to-indigo-800 text-white p-4 sticky top-0 z-40 shadow-md no-print">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <div class="p-2 bg-indigo-600 rounded-lg">
+            <i data-lucide="graduation-cap" class="w-6 h-6 text-indigo-100"></i>
+          </div>
+          <div>
+            <h1 class="font-bold text-base leading-tight">Smart Generator</h1>
+            <p class="text-xs text-indigo-200">Asisten Ibu Dewi Ratna Sari</p>
+          </div>
+        </div>
+        <!-- Tombol Pengaturan API Key -->
+        <button onclick="openSettings()" class="p-2 bg-indigo-600/50 hover:bg-indigo-600 rounded-lg transition-colors">
+          <i data-lucide="settings" class="w-5 h-5 text-white"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed top-16 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-xs px-4 py-3 rounded-xl shadow-lg z-50 transition-all duration-300 opacity-0 pointer-events-none flex items-center space-x-2 max-w-sm w-11/12 no-print">
+      <i id="toast-icon" data-lucide="info" class="w-4 h-4 text-indigo-400"></i>
+      <span id="toast-message">Notifikasi</span>
+    </div>
+
+    <!-- MODAL PENGATURAN API KEY (Penting untuk GitHub Pages) -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 no-print">
+      <div class="bg-white rounded-2xl w-full max-w-sm p-5 shadow-2xl transform transition-all">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-bold text-slate-800 flex items-center gap-2">
+            <i data-lucide="key" class="w-4 h-4 text-indigo-600"></i> Pengaturan Sistem
+          </h3>
+          <button onclick="closeSettings()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <div class="space-y-3 text-sm">
+          <p class="text-xs text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100">Karena aplikasi ini berjalan statis di GitHub, simpan <b>Gemini API Key</b> Anda di sini. Key hanya disimpan aman di dalam browser Anda (Local Storage).</p>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Google Gemini API Key</label>
+            <input type="password" id="api-key-input" placeholder="AIzaSy..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+          </div>
+          <button onclick="saveApiKey()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl py-2 mt-2 transition-colors">
+            Simpan Konfigurasi
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN VIEWS -->
+    <main class="flex-grow p-4 overflow-y-auto no-print">
+      <!-- TAB HARIAN -->
+      <section id="tab-harian" class="space-y-4">
+        <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex items-start space-x-3">
+          <div class="bg-indigo-100 text-indigo-700 p-2 rounded-xl mt-0.5">
+            <i data-lucide="sparkles" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h2 class="font-semibold text-indigo-900 text-sm">Asisten Ibu Dewi Ratna Sari</h2>
+            <p class="text-xs text-indigo-700 mt-1">Pilih tingkat kelas dan format aktivitas untuk membuat LKPD, dialog, game, atau soal latihan dengan instan.</p>
+          </div>
+        </div>
+
+        <div class="bg-white border border-slate-100 shadow-sm rounded-2xl p-4 space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Tingkat Kelas</label>
+              <select id="harian-kelas" onchange="updateMateriList('harian')" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="7" selected>Kelas 7 (Tujuh)</option>
+                <option value="8">Kelas 8 (Delapan)</option>
+                <option value="9">Kelas 9 (Sembilan)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Semester</label>
+              <select id="harian-semester" onchange="updateMateriList('harian')" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <option value="1 (Ganjil)" selected>1 (Ganjil)</option>
+                <option value="2 (Genap)">2 (Genap)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Pilih Bab / Materi Pokok</label>
+            <select id="harian-materi" onchange="onMateriSelect('harian')" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </select>
+          </div>
+
+          <div class="bg-slate-50 rounded-xl p-3 text-xs space-y-2 border border-slate-100">
+            <div>
+              <span class="font-semibold text-slate-600">Target Grammar:</span>
+              <p id="harian-grammar-label" class="text-slate-800 italic mt-0.5">-</p>
+            </div>
+            <div>
+              <span class="font-semibold text-slate-600">Target Pembelajaran (CP):</span>
+              <p id="harian-cp-label" class="text-slate-800 mt-0.5">-</p>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Format Yang Diinginkan</label>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="setTipeOutput('Soal Evaluasi')" id="btn-out-soal" class="tipe-output-btn border border-slate-200 text-slate-700 bg-white rounded-xl p-2.5 text-xs font-medium flex items-center justify-center space-x-2 transition-all">
+                <i data-lucide="clipboard-list" class="w-4 h-4"></i><span>Soal Evaluasi</span>
+              </button>
+              <button onclick="setTipeOutput('Dialog Interaktif')" id="btn-out-dialog" class="tipe-output-btn border border-slate-200 text-slate-700 bg-white rounded-xl p-2.5 text-xs font-medium flex items-center justify-center space-x-2 transition-all">
+                <i data-lucide="message-square" class="w-4 h-4"></i><span>Dialog Praktis</span>
+              </button>
+              <button onclick="setTipeOutput('Worksheet Kreatif')" id="btn-out-worksheet" class="tipe-output-btn border border-slate-200 text-slate-700 bg-white rounded-xl p-2.5 text-xs font-medium flex items-center justify-center space-x-2 transition-all">
+                <i data-lucide="file-text" class="w-4 h-4"></i><span>Worksheet</span>
+              </button>
+              <button onclick="setTipeOutput('Game & Ice Breaking')" id="btn-out-game" class="tipe-output-btn border border-slate-200 text-slate-700 bg-white rounded-xl p-2.5 text-xs font-medium flex items-center justify-center space-x-2 transition-all">
+                <i data-lucide="gamepad-2" class="w-4 h-4"></i><span>Game Kelas</span>
+              </button>
+            </div>
+          </div>
+
+          <button onclick="generateMaterial('harian')" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold rounded-xl py-3 text-sm flex items-center justify-center space-x-2 shadow-lg shadow-indigo-100 transition-all">
+            <i data-lucide="cpu" class="w-4 h-4"></i><span>Mulai Generate Materi</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- TAB MODUL -->
+      <section id="tab-modul" class="space-y-4 hidden">
+        <div class="bg-violet-50 border border-violet-100 rounded-2xl p-4 flex items-start space-x-3">
+          <div class="bg-violet-100 text-violet-700 p-2 rounded-xl mt-0.5"><i data-lucide="book-open" class="w-5 h-5"></i></div>
+          <div>
+            <h2 class="font-semibold text-violet-900 text-sm">Generator Modul Lengkap</h2>
+            <p class="text-xs text-violet-700 mt-1">Susun Rencana Pelaksanaan Pembelajaran (RPP) / Modul Lengkap terstruktur.</p>
+          </div>
+        </div>
+        <div class="bg-white border border-slate-100 shadow-sm rounded-2xl p-4 space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Tingkat Kelas</label>
+              <select id="modul-kelas" onchange="updateMateriList('modul')" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-500">
+                <option value="7" selected>Kelas 7</option>
+                <option value="8">Kelas 8</option>
+                <option value="9">Kelas 9</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Semester</label>
+              <select id="modul-semester" onchange="updateMateriList('modul')" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-500">
+                <option value="1 (Ganjil)" selected>1 (Ganjil)</option>
+                <option value="2 (Genap)">2 (Genap)</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Pilih Bab / Materi Pokok</label>
+            <select id="modul-materi" onchange="onMateriSelect('modul')" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-500"></select>
+          </div>
+          <button onclick="generateMaterial('modul')" class="w-full bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 text-white font-semibold rounded-xl py-3 text-sm flex items-center justify-center space-x-2 shadow-lg shadow-violet-100 transition-all">
+            <i data-lucide="book-open" class="w-4 h-4"></i><span>Generate Modul Lengkap</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- TAB REKAP -->
+      <section id="tab-rekap" class="space-y-4 hidden">
+        <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-start space-x-3">
+          <div class="bg-blue-100 text-blue-700 p-2 rounded-xl mt-0.5"><i data-lucide="calendar-days" class="w-5 h-5"></i></div>
+          <div>
+            <h2 class="font-semibold text-blue-900 text-sm">Generator Rekap Materi</h2>
+            <p class="text-xs text-blue-700 mt-1">Buat pedoman tabel rencana pembelajaran bulanan atau rekap 1 tahun.</p>
+          </div>
+        </div>
+        <div class="bg-white border border-slate-100 shadow-sm rounded-2xl p-4 space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Tingkat Kelas</label>
+            <select id="rekap-kelas" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="7">Kelas 7</option>
+              <option value="8">Kelas 8</option>
+              <option value="9">Kelas 9</option>
+            </select>
+          </div>
+          <div class="flex items-center space-x-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <input type="checkbox" id="rekap-tahun" onchange="toggleRekapBulan()" class="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500">
+            <label for="rekap-tahun" class="text-sm font-medium text-slate-700">Tampilkan Penuh 1 Tahun (Tahunan)</label>
+          </div>
+          <div id="container-rekap-bulan" class="transition-all duration-300">
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1.5">Pilih Bulan</label>
+            <select id="rekap-bulan" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="July">July</option><option value="August">August</option><option value="September">September</option>
+              <option value="October">October</option><option value="November">November</option><option value="December">December</option>
+              <option value="January">January</option><option value="February">February</option><option value="March">March</option>
+              <option value="April">April</option><option value="May">May</option><option value="June">June</option>
+            </select>
+          </div>
+          <button onclick="generateRekap()" class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl py-3 text-sm flex items-center justify-center space-x-2 shadow-lg shadow-blue-100 transition-all">
+            <i data-lucide="table" class="w-4 h-4"></i><span>Generate PDF / Pedoman</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- TAB KURIKULUM -->
+      <section id="tab-kurikulum" class="space-y-4 hidden">
+        <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-start space-x-3">
+          <div class="bg-emerald-100 text-emerald-700 p-2 rounded-xl mt-0.5"><i data-lucide="award" class="w-5 h-5"></i></div>
+          <div>
+            <h2 class="font-semibold text-emerald-900 text-sm">Referensi Kurikulum MTs</h2>
+          </div>
+        </div>
+        <div class="space-y-3">
+          <div class="flex space-x-2">
+            <button onclick="filterKurikulum('7')" id="btn-kur-7" class="kur-filter-btn flex-1 py-2 text-xs font-semibold rounded-xl bg-indigo-600 text-white border border-indigo-600">Kelas 7</button>
+            <button onclick="filterKurikulum('8')" id="btn-kur-8" class="kur-filter-btn flex-1 py-2 text-xs font-semibold rounded-xl bg-white text-slate-600 border border-slate-200">Kelas 8</button>
+            <button onclick="filterKurikulum('9')" id="btn-kur-9" class="kur-filter-btn flex-1 py-2 text-xs font-semibold rounded-xl bg-white text-slate-600 border border-slate-200">Kelas 9</button>
+          </div>
+          <div id="kurikulum-cards-container" class="space-y-3"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- LOADING SCREEN -->
+    <div id="loading-overlay" class="hidden absolute inset-0 bg-white/95 backdrop-blur-sm z-50 flex flex-col items-center justify-center space-y-4 no-print">
+      <div class="relative w-16 h-16">
+        <div class="absolute inset-0 rounded-full border-4 border-indigo-200 animate-pulse"></div>
+        <div class="absolute inset-0 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin"></div>
+      </div>
+      <div class="text-center">
+        <p class="font-bold text-slate-800 text-sm">Menghubungkan ke Gemini...</p>
+        <p class="text-xs text-slate-500 mt-1">Menyusun materi ajar (15-30 detik)</p>
+      </div>
+    </div>
+
+    <!-- PREVIEW AREA -->
+    <section id="preview-section" class="hidden absolute inset-0 bg-white z-40 flex flex-col no-print">
+      <div class="bg-slate-100 px-4 py-3 border-b border-slate-200 flex items-center justify-between sticky top-0 z-50">
+        <button onclick="closePreview()" class="flex items-center space-x-1 text-slate-600 hover:text-slate-800 text-xs font-semibold">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i><span>Kembali</span>
+        </button>
+        <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Hasil Preview</span>
+        <button onclick="printResult()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-colors">
+          <i data-lucide="printer" class="w-3.5 h-3.5"></i><span>Cetak / PDF</span>
+        </button>
+      </div>
+      <div class="flex-grow p-6 overflow-y-auto bg-slate-50">
+        <div class="bg-white p-8 max-w-2xl mx-auto shadow-sm rounded-xl border border-slate-200 min-h-[29.7cm] relative">
+          <div class="border-b-2 border-double border-slate-800 pb-4 mb-6 text-center">
+            <h2 class="font-bold text-lg text-slate-800 leading-tight" contenteditable="true">MTs AL-ISLAM KAPAS</h2>
+            <p class="text-xs text-slate-500" contenteditable="true">Kelurahan Kapas, Kecamatan Sukomoro, Kabupaten Nganjuk</p>
+            <p class="text-xs text-slate-500 italic mt-0.5" contenteditable="true">Mata Pelajaran: Bahasa Inggris | Pengajar: Dewi Ratna Sari, S.Pd.</p>
+          </div>
+          <article id="output-content" class="prose prose-indigo prose-sm max-w-none text-slate-800 leading-relaxed"></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRINT VIEW -->
+    <div id="print-view-only" class="hidden print:block print-container">
+      <div class="text-center border-b-2 border-double border-black pb-4 mb-6">
+        <h2 id="p-school" class="font-bold text-xl text-black">MTs AL-ISLAM KAPAS</h2>
+        <p id="p-sub" class="text-sm text-black">Kelurahan Kapas, Kecamatan Sukomoro, Kabupaten Nganjuk</p>
+        <p id="p-year" class="text-xs text-black italic mt-0.5">Mata Pelajaran: Bahasa Inggris | Pengajar: Dewi Ratna Sari, S.Pd.</p>
+      </div>
+      <div id="print-content-rendered"></div>
+    </div>
+
+    <!-- FOOTER NAV -->
+    <footer class="fixed bottom-0 left-0 right-0 md:absolute bg-white border-t border-slate-100 z-40 no-print">
+      <div class="max-w-lg mx-auto flex justify-around items-center h-16 px-2">
+        <button onclick="switchTab('harian')" id="nav-harian" class="nav-btn flex flex-col items-center justify-center flex-grow text-indigo-600 transition-all">
+          <i data-lucide="sparkles" class="w-5 h-5 mb-1"></i><span class="text-[10px] font-medium">Harian</span>
+        </button>
+        <button onclick="switchTab('modul')" id="nav-modul" class="nav-btn flex flex-col items-center justify-center flex-grow text-slate-400 transition-all">
+          <i data-lucide="book-open" class="w-5 h-5 mb-1"></i><span class="text-[10px] font-medium">Modul</span>
+        </button>
+        <button onclick="switchTab('rekap')" id="nav-rekap" class="nav-btn flex flex-col items-center justify-center flex-grow text-slate-400 transition-all">
+          <i data-lucide="calendar-days" class="w-5 h-5 mb-1"></i><span class="text-[10px] font-medium">Rekap</span>
+        </button>
+        <button onclick="switchTab('kurikulum')" id="nav-kurikulum" class="nav-btn flex flex-col items-center justify-center flex-grow text-slate-400 transition-all">
+          <i data-lucide="award" class="w-5 h-5 mb-1"></i><span class="text-[10px] font-medium">Kurikulum</span>
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // CONFIG MODEL 
+    const MODEL_NAME = "gemini-3.1-flash-lite";
+
+    // DATABASE KURIKULUM
+    const CURRICULUM_DATA = {
+      "7": {
+        "1 (Ganjil)": [
+          { materi: "Greetings & Introductions: Perkenalan diri, keluarga, dan asal.", grammar: "Simple Present Tense, Pronouns", cp: "Berinteraksi dasar, memperkenalkan diri.", contoh: "I am a student." },
+          { materi: "Daily Routines & Hobbies: Jadwal harian.", grammar: "Simple Present Tense", cp: "Menceritakan kebiasaan.", contoh: "I wake up at 5 AM." },
+          { materi: "Descriptive Text: Ciri fisik orang dan hewan.", grammar: "Adjectives, Simple Present", cp: "Mendeskripsikan orang/hewan.", contoh: "He has short hair." }
+        ],
+        "2 (Genap)": [
+          { materi: "Descriptive Text: Bagian rumah dan sekolah.", grammar: "Prepositions of Place", cp: "Menjelaskan ruangan.", contoh: "The cat is under the table." },
+          { materi: "Giving Directions: Lokasi dan petunjuk arah.", grammar: "Imperative Sentences", cp: "Memberikan petunjuk arah.", contoh: "Turn left." },
+          { materi: "Procedure Text: Resep makanan/minuman.", grammar: "Imperative Sentences", cp: "Menulis langkah-langkah.", contoh: "Stir the coffee." }
+        ]
+      },
+      "8": {
+        "1 (Ganjil)": [
+          { materi: "Recount Text: Pengalaman pribadi di masa lalu.", grammar: "Simple Past Tense", cp: "Menceritakan kejadian.", contoh: "We visited Bali." },
+          { materi: "Asking & Giving Opinion: Meminta dan memberi pendapat.", grammar: "Expressions of Opinion", cp: "Berdiskusi ringan.", contoh: "I think it is good." },
+          { materi: "Celebrations: Festival dan hari besar.", grammar: "Simple Past Tense", cp: "Mendeskripsikan perayaan.", contoh: "We celebrated Independence Day." }
+        ],
+        "2 (Genap)": [
+          { materi: "Narrative Text (Fables): Cerita fiksi.", grammar: "Simple Past Tense", cp: "Memahami dongeng.", contoh: "Once upon a time..." },
+          { materi: "Degrees of Comparison: Membandingkan.", grammar: "Degrees of Comparison", cp: "Membuat perbandingan.", contoh: "He is the tallest." },
+          { materi: "Short Functional Text: Pesan singkat.", grammar: "Modal Verbs", cp: "Menangkap info pengumuman.", contoh: "Do not enter!" }
+        ]
+      },
+      "9": {
+        "1 (Ganjil)": [
+          { materi: "Report Text: Fakta ilmiah.", grammar: "Passive Voice", cp: "Membedakan teks deskripsi & laporan.", contoh: "Honey is produced by bees." },
+          { materi: "Procedure Text: Panduan alat.", grammar: "Modals", cp: "Membaca instruksi.", contoh: "You must plug in." },
+          { materi: "Expressions: Harapan dan doa.", grammar: "Stating Hopes", cp: "Merespons pencapaian.", contoh: "I hope you win." }
+        ],
+        "2 (Genap)": [
+          { materi: "Narrative Text (Legends): Legenda.", grammar: "Simple Past Tense", cp: "Menganalisis cerita kompleks.", contoh: "The king said..." },
+          { materi: "Labels & Advertisements: Label produk.", grammar: "Conjunctions", cp: "Mengekstrak info gizi.", contoh: "Drink this so that..." },
+          { materi: "Song Lyrics & Poetry: Pesan lagu.", grammar: "Figurative Language", cp: "Menafsirkan makna tersirat.", contoh: "Heal the world." }
+        ]
+      }
+    };
+
+    // DATABASE SILABUS
+    const SYLLABUS_DATA = {
+      "7": {
+        "July": { unit: "Unit 1: Introducing Myself", objectives: "Students introduce themselves.", focus: "Greetings", activities: "Pair intro", assessment: "Speaking" },
+        "August": { unit: "Unit 2: My Classroom", objectives: "Identify classroom objects.", focus: "This/That", activities: "Labeling", assessment: "Quiz" },
+        "September": { unit: "Unit 3: My Family", objectives: "Describe family members.", focus: "Possessive adjectives", activities: "Family tree", assessment: "Writing" },
+        "October": { unit: "Unit 4: Daily Activities", objectives: "Talk about routines.", focus: "Simple Present", activities: "Daily schedule", assessment: "Speaking" },
+        "November": { unit: "Unit 5: Hobbies", objectives: "Express likes.", focus: "Like/Love", activities: "Survey", assessment: "Presentation" },
+        "December": { unit: "Unit 6: My House", objectives: "Describe rooms.", focus: "Prepositions", activities: "House map", assessment: "Worksheet" },
+        "January": { unit: "Unit 7: Food and Drinks", objectives: "Order food.", focus: "Countable/Uncountable", activities: "Menu project", assessment: "Performance" },
+        "February": { unit: "Unit 8: Public Places", objectives: "Ask directions.", focus: "Imperatives", activities: "Map activities", assessment: "Speaking" },
+        "March": { unit: "Unit 9: Describing People", objectives: "Describe appearance.", focus: "Adjectives", activities: "Guessing game", assessment: "Writing" },
+        "April": { unit: "Unit 10: Animals", objectives: "Describe animals.", focus: "Simple Present", activities: "Fact file", assessment: "Reading" },
+        "May": { unit: "Unit 11: Short Texts", objectives: "Understand notices.", focus: "Imperatives", activities: "Poster", assessment: "Test" },
+        "June": { unit: "Unit 12: Review", objectives: "Integrate skills.", focus: "Review", activities: "Portfolio", assessment: "Project" }
+      },
+      "8": {
+        "July": { unit: "Unit 1: Independence Games", objectives: "Describe past games.", focus: "Simple Past", activities: "Recounting games", assessment: "Writing" },
+        "August": { unit: "Unit 2: Parades", objectives: "Identify sequences.", focus: "Past Tense", activities: "Ordering paragraphs", assessment: "Reading" },
+        "September": { unit: "Unit 3: School Celebrations", objectives: "Write recount.", focus: "To be (was/were)", activities: "Journals", assessment: "Peer-review" },
+        "October": { unit: "Unit 4: Fables", objectives: "Identify moral values.", focus: "Past action verbs", activities: "Role-play", assessment: "Speaking" },
+        "November": { unit: "Unit 5: Animal Stories", objectives: "Retell stories.", focus: "Direct speech", activities: "Storytelling", assessment: "Rubric" },
+        "December": { unit: "Unit 6: Review", objectives: "Integrate skills.", focus: "Past tenses", activities: "Portfolio", assessment: "Project" },
+        "January": { unit: "Unit 7: Ocean Pollution", objectives: "Talk about waste.", focus: "Passive Voice", activities: "Posters", assessment: "Writing" },
+        "February": { unit: "Unit 8: Marine Life", objectives: "Describe animals.", focus: "Adjectives", activities: "Flashcards", assessment: "Presentation" },
+        "March": { unit: "Unit 9: Waste Management", objectives: "Write procedures.", focus: "Imperatives", activities: "Sorting game", assessment: "Writing" },
+        "April": { unit: "Unit 10: Eco-products", objectives: "Follow instructions.", focus: "Action verbs", activities: "Crafts", assessment: "Project" },
+        "May": { unit: "Unit 11: Self Acceptance", objectives: "Talk about traits.", focus: "Comparatives", activities: "Compliments", assessment: "Writing" },
+        "June": { unit: "Unit 12: Year-End Project", objectives: "Showcase growth.", focus: "Review", activities: "Language fair", assessment: "Project" }
+      },
+      "9": {
+        "July": { unit: "Unit 1: Wildlife", objectives: "Identify facts.", focus: "Passive Voice", activities: "Fact matching", assessment: "Writing" },
+        "August": { unit: "Unit 2: Traditional Outfits", objectives: "Describe clothing.", focus: "Adjectives", activities: "Dressing dolls", assessment: "Speaking" },
+        "September": { unit: "Unit 3: Natural Phenomena", objectives: "Explain phenomena.", focus: "Passive voice", activities: "Diagrams", assessment: "Report" },
+        "October": { unit: "Unit 4: Taking Trips", objectives: "Comprehend travel logs.", focus: "Simple Past", activities: "Virtual tour", assessment: "Blog post" },
+        "November": { unit: "Unit 5: Local Legends", objectives: "Analyze plot.", focus: "Past Continuous", activities: "Theater", assessment: "Performance" },
+        "December": { unit: "Unit 6: Storytelling Project", objectives: "Present legend.", focus: "Past tenses", activities: "Mini-theater", assessment: "Project" },
+        "January": { unit: "Unit 7: Food Labels", objectives: "Extract info.", focus: "Modals", activities: "Comparing labels", assessment: "Worksheet" },
+        "February": { unit: "Unit 8: Medicine Labels", objectives: "Interpret dosage.", focus: "Conditionals", activities: "Roleplay", assessment: "Quiz" },
+        "March": { unit: "Unit 9: Appliance Manuals", objectives: "Understand manuals.", focus: "Imperatives", activities: "Troubleshooting", assessment: "Writing" },
+        "April": { unit: "Unit 10: Saving Energy", objectives: "Compose rules.", focus: "Modals of obligation", activities: "Energy audit", assessment: "Poster" },
+        "May": { unit: "Unit 11: Songs and Poetry", objectives: "Interpret messages.", focus: "Figurative language", activities: "Lyric analysis", assessment: "Recital" },
+        "June": { unit: "Unit 12: Graduation Showcase", objectives: "Deliver speech.", focus: "Review", activities: "Exhibition", assessment: "Speech" }
+      }
+    };
+
+    let currentTab = 'harian';
+    let selectedTipeOutput = 'Soal Evaluasi'; 
+    let isCurrentOutputLandscape = false; 
+
+    // INIT
+    window.onload = function() {
+      try { if (typeof lucide !== 'undefined') lucide.createIcons(); } catch (e) {}
+      updateMateriList('harian');
+      updateMateriList('modul');
+      setTipeOutput('Soal Evaluasi');
+      buildKurikulumView();
+
+      // Check if API key exists, if not show modal
+      if (!localStorage.getItem('gemini_api_key')) {
+        setTimeout(openSettings, 1000);
+      } else {
+        document.getElementById('api-key-input').value = localStorage.getItem('gemini_api_key');
+      }
+    };
+
+    // API KEY MANAGEMENT
+    function openSettings() {
+      document.getElementById('settings-modal').classList.remove('hidden');
+    }
+    
+    function closeSettings() {
+      document.getElementById('settings-modal').classList.add('hidden');
+    }
+
+    function saveApiKey() {
+      const key = document.getElementById('api-key-input').value.trim();
+      if(key) {
+        localStorage.setItem('gemini_api_key', key);
+        showToast("API Key berhasil disimpan di browser!", "success");
+        closeSettings();
+      } else {
+        showToast("API Key tidak boleh kosong", "error");
+      }
+    }
+
+    // UI LOGIC
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast-message');
+      const toastIcon = document.getElementById('toast-icon');
+      if (!toast) return;
+      toastMsg.textContent = message;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      toast.classList.add('opacity-100');
+      toastIcon.className = type === 'error' ? "w-4 h-4 text-red-500" : "w-4 h-4 text-indigo-400";
+      setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 4000);
+    }
+
+    function switchTab(tabId) {
+      currentTab = tabId;
+      ['harian', 'modul', 'rekap', 'kurikulum'].forEach(id => {
+        document.getElementById('tab-' + id).classList.add('hidden');
+      });
+      document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('text-indigo-600', 'text-violet-600', 'text-emerald-600', 'text-blue-600');
+        btn.classList.add('text-slate-400');
+      });
+      const activeBtn = document.getElementById('nav-' + tabId);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-slate-400');
+        if (tabId === 'harian') activeBtn.classList.add('text-indigo-600');
+        if (tabId === 'modul') activeBtn.classList.add('text-violet-600');
+        if (tabId === 'rekap') activeBtn.classList.add('text-blue-600');
+        if (tabId === 'kurikulum') activeBtn.classList.add('text-emerald-600');
+      }
+    }
+
+    function updateMateriList(tabPrefix) {
+      const kelasVal = document.getElementById(`${tabPrefix}-kelas`).value;
+      const semesterVal = document.getElementById(`${tabPrefix}-semester`).value;
+      const materiSelect = document.getElementById(`${tabPrefix}-materi`);
+      
+      materiSelect.innerHTML = '';
+      if (!CURRICULUM_DATA[kelasVal] || !CURRICULUM_DATA[kelasVal][semesterVal]) return;
+
+      CURRICULUM_DATA[kelasVal][semesterVal].forEach((item, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = item.materi.substring(0, 50) + (item.materi.length > 50 ? '...' : '');
+        materiSelect.appendChild(option);
+      });
+      onMateriSelect(tabPrefix);
+    }
+
+    function onMateriSelect(tabPrefix) {
+      const kelasVal = document.getElementById(`${tabPrefix}-kelas`).value;
+      const semesterVal = document.getElementById(`${tabPrefix}-semester`).value;
+      const materiIndex = document.getElementById(`${tabPrefix}-materi`).value;
+      const selectedData = CURRICULUM_DATA[kelasVal][semesterVal][materiIndex];
+
+      const grammarLabel = document.getElementById(`${tabPrefix}-grammar-label`);
+      const cpLabel = document.getElementById(`${tabPrefix}-cp-label`);
+      if (grammarLabel) grammarLabel.textContent = selectedData ? selectedData.grammar : '-';
+      if (cpLabel) cpLabel.textContent = selectedData ? selectedData.cp : '-';
+    }
+
+    function setTipeOutput(tipe) {
+      selectedTipeOutput = tipe;
+      document.querySelectorAll('.tipe-output-btn').forEach(btn => {
+        btn.classList.remove('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+        btn.classList.add('border-slate-200', 'bg-white', 'text-slate-700');
+      });
+
+      let activeId = '';
+      if (tipe === 'Soal Evaluasi') activeId = 'btn-out-soal';
+      if (tipe === 'Dialog Interaktif') activeId = 'btn-out-dialog';
+      if (tipe === 'Worksheet Kreatif') activeId = 'btn-out-worksheet';
+      if (tipe === 'Game & Ice Breaking') activeId = 'btn-out-game';
+
+      const activeBtn = document.getElementById(activeId);
+      if (activeBtn) activeBtn.classList.add('border-indigo-600', 'bg-indigo-50', 'text-indigo-700');
+    }
+
+    function toggleRekapBulan() {
+      const isTahun = document.getElementById('rekap-tahun').checked;
+      document.getElementById('container-rekap-bulan').classList.toggle('hidden', isTahun);
+    }
+
+    // Fungsi yang sebelumnya hilang telah ditambahkan kembali di sini
+    function buildKurikulumView() {
+      filterKurikulum('7');
+    }
+
+    function filterKurikulum(kelas) {
+      document.querySelectorAll('.kur-filter-btn').forEach(btn => {
+        btn.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
+        btn.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+      });
+      document.getElementById('btn-kur-' + kelas).classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
+
+      const container = document.getElementById('kurikulum-cards-container');
+      container.innerHTML = '';
+      ["1 (Ganjil)", "2 (Genap)"].forEach(sem => {
+        container.innerHTML += `<h3 class="text-xs font-bold text-indigo-800 uppercase mt-4 mb-2"><span class="bg-indigo-100 px-2 py-0.5 rounded-md">Semester ${sem}</span></h3>`;
+        if (CURRICULUM_DATA[kelas][sem]) {
+          CURRICULUM_DATA[kelas][sem].forEach(item => {
+            container.innerHTML += `
+              <div class="bg-white border border-slate-100 rounded-xl p-3.5 space-y-2 shadow-sm text-xs">
+                <span class="font-bold text-slate-800 block">${item.materi}</span>
+                <div class="grid gap-1 border-t border-slate-50 pt-2 text-slate-600">
+                  <p>🧬 <b>Grammar:</b> ${item.grammar}</p>
+                  <p>🎯 <b>CP:</b> ${item.cp}</p>
+                  <p class="text-indigo-600 font-medium">💡 <b>Contoh:</b> "${item.contoh}"</p>
+                </div>
+              </div>`;
+          });
+        }
+      });
+    }
+
+    // ==========================================
+    // INTI PEMANGGILAN API GEMINI VIA FRONTEND
+    // ==========================================
+    async function triggerFrontendAPI(payloadData) {
+      const apiKey = localStorage.getItem('gemini_api_key');
+      
+      if (!apiKey) {
+        showToast("API Key belum diatur! Silakan buka menu pengaturan.", "error");
+        openSettings();
+        return;
+      }
+
+      document.getElementById('loading-overlay').classList.remove('hidden');
+
+      // 1. Rekayasa System Instruction (Diambil dari kode GAS lama)
+      const systemInstruction = `Kamu adalah Asisten Guru Bahasa Inggris profesional dan ahli pedagogi untuk tingkat SMP/MTs di Indonesia.
+Tugasmu adalah membantu guru membuat bahan ajar yang praktis, komunikatif, menyenangkan, dan sesuai dengan target Kurikulum Merdeka di Indonesia.
+Gunakan bahasa instruksi guru yang ramah, jelas, mudah dipahami siswa remaja (usia 12-15 tahun).
+Patuhi struktur materi yang diminta secara konsisten.`;
+
+      // 2. Rekayasa Prompt Utama
+      let prompt = `Buatkan materi pengajaran Bahasa Inggris dengan detail berikut:
+- Kelas: ${payloadData.kelas}
+- Semester: ${payloadData.semester}
+- Materi Utama: ${payloadData.materi}
+- Fokus Grammar: ${payloadData.grammar}
+- Target Capaian Pembelajaran (CP): ${payloadData.cp}
+
+Jenis Output yang Diminta: ${payloadData.tipe}
+`;
+
+      if (payloadData.tipe === "Soal Evaluasi") {
+        prompt += `Ketentuan: 5 Pilihan Ganda (A,B,C,D), 5 Isian Rumpang, berikan kunci jawaban lengkap di bawah. Buat tabel rapi.`;
+      } else if (payloadData.tipe === "Dialog Interaktif") {
+        prompt += `Ketentuan: 2 versi dialog (1 formal, 1 informal). Berikan glosarium dan 3 pertanyaan reading comprehension.`;
+      } else if (payloadData.tipe === "Worksheet Kreatif") {
+        prompt += `Ketentuan: Task-Based Learning. Task 1: Menyusun kata/menjodohkan. Task 2: Proyek menulis pendek. Desain instruksi menarik.`;
+      } else if (payloadData.tipe === "Game & Ice Breaking") {
+        prompt += `Ketentuan: Panduan game offline di kelas (nama game, waktu, alat, cara bermain, contoh aksi).`;
+      } else if (payloadData.tipe === "Modul Lengkap") {
+        prompt += `Ketentuan: Modul terstruktur dalam tabel: Identitas, Tujuan, Materi Penjelasan (Tabel rumus/struktur), Contoh Praktis, Rencana Aktivitas (Pembuka, Inti, Penutup).`;
+      }
+
+      prompt += `\nFormat output harus menggunakan Markdown yang bersih dan rapi. Hindari elemen yang tidak perlu agar langsung bisa dicetak guru.`;
+
+      const payload = {
+        contents: [{ parts: [{ text: prompt }] }],
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        generationConfig: { temperature: 0.7, topK: 40, topP: 0.95, maxOutputTokens: 4096 }
+      };
+
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error?.message || "Terjadi kesalahan pada server Gemini.");
+        }
+
+        const markdownResult = data.candidates[0].content.parts[0].text;
+        openPreview(markdownResult);
+
+      } catch (error) {
+        showToast("Error: " + error.message, "error");
+        console.error("Gemini API Error:", error);
+      } finally {
+        document.getElementById('loading-overlay').classList.add('hidden');
+      }
+    }
+
+    // Trigger dari UI Harian & Modul
+    function generateMaterial(mode) {
+      const kelas = document.getElementById(`${mode}-kelas`).value;
+      const semester = document.getElementById(`${mode}-semester`).value;
+      const materiIndex = document.getElementById(`${mode}-materi`).value;
+      const selectedData = CURRICULUM_DATA[kelas][semester][materiIndex];
+
+      if (!selectedData) return showToast("Data kurikulum tidak ditemukan.", "error");
+
+      const payload = {
+        kelas: kelas, semester: semester, materi: selectedData.materi,
+        grammar: selectedData.grammar, cp: selectedData.cp,
+        tipe: (mode === 'modul') ? 'Modul Lengkap' : selectedTipeOutput
+      };
+
+      isCurrentOutputLandscape = false;
+      triggerFrontendAPI(payload);
+    }
+
+    // Trigger dari UI Rekap
+    function generateRekap() {
+      const kelas = document.getElementById('rekap-kelas').value;
+      const isTahun = document.getElementById('rekap-tahun').checked;
+      const bulan = document.getElementById('rekap-bulan').value;
+      const currentSyllabusDb = SYLLABUS_DATA[kelas];
+      let customInstruction = "";
+
+      if (isTahun) {
+        customInstruction = `Buatkan tabel 'Yearly Syllabus Recap' penuh selama 1 tahun pelajaran untuk Kelas ${kelas} di MTs Al-Islam Kapas berdasarkan database JSON ini:\n${JSON.stringify(currentSyllabusDb)}\nBuat tabel Markdown (Month, Unit, Learning Objectives, Language Focus, Activities, Assessment) dalam bahasa Inggris. Langsung tampilkan tabelnya.`;
+      } else {
+        const dataBulan = currentSyllabusDb[bulan];
+        customInstruction = `Buatkan tabel '4-Week Monthly Lesson Plan' untuk Kelas ${kelas} bulan ${bulan}. Materi: Unit: ${dataBulan.unit} | Objectives: ${dataBulan.objectives} | Focus: ${dataBulan.focus}. Pecah menjadi 4 minggu (Week 1,2,3,4) dengan metode interaktif berbeda tiap minggu. Buat tabel Markdown (Week, Topic Breakdown, Interactive Method, Classroom Activities, Assessment). Langsung tampilkan tabelnya.`;
+      }
+
+      const payload = {
+        kelas: kelas, semester: "Pedoman Tahunan", materi: customInstruction,
+        grammar: "-", cp: "Sesuai rekap silabus tahunan Kelas " + kelas,
+        tipe: "Rekap Materi Khusus (Lihat instruksi detail pada Materi Utama)"
+      };
+
+      isCurrentOutputLandscape = true;
+      triggerFrontendAPI(payload);
+    }
+
+    // PREVIEW RENDERING
+    function openPreview(markdownText) {
+      let renderedHtml = markdownText;
+      if (typeof marked !== 'undefined' && marked.parse) {
+        renderedHtml = marked.parse(markdownText);
+      } else {
+        renderedHtml = markdownText.replace(/\n/g, '<br>');
+      }
+
+      document.getElementById('output-content').innerHTML = renderedHtml;
+      document.getElementById('print-content-rendered').innerHTML = renderedHtml;
+      document.getElementById('preview-section').classList.remove('hidden');
+    }
+
+    function closePreview() {
+      document.getElementById('preview-section').classList.add('hidden');
+    }
+
+    function printResult() {
+      const existingStyle = document.getElementById('landscape-print-style');
+      if (existingStyle) existingStyle.remove();
+
+      const style = document.createElement('style');
+      style.id = 'landscape-print-style';
+      style.innerHTML = isCurrentOutputLandscape ? '@media print { @page { size: landscape; margin: 1.5cm; } }' : '@media print { @page { size: portrait; margin: 2cm; } }';
+      document.head.appendChild(style);
+
+      window.print();
+    }
+  </script>
+</body>
+</html>
