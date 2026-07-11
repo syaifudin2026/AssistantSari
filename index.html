@@ -857,9 +857,9 @@
               <span class="font-bold text-slate-800 leading-tight block">${item.materi}</span>
             </div>
             <div class="grid grid-cols-1 gap-1 border-t border-slate-50 pt-2 text-slate-600">
-              <p>🧬 <span class="font-semibold">Grammar:</span> ${item.grammar}</p>
+              <p>📍 <span class="font-semibold">Grammar:</span> ${item.grammar}</p>
               <p>🎯 <span class="font-semibold">Target CP:</span> ${item.cp}</p>
-              <p class="text-indigo-600 font-medium">💡 <span class="font-semibold">Contoh:</span> "${item.contoh}"</p>
+              <p class="text-indigo-600 font-medium">💬 <span class="font-semibold">Contoh:</span> "${item.contoh}"</p>
             </div>
           `;
           container.appendChild(card);
@@ -1037,10 +1037,14 @@ Hasilkan keseluruhan modul dalam format Markdown murni yang terstruktur rapi, el
         }
       }
       
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+      // MODEL DIPERBARUI KE gemini-3.1-flash-lite (Sesuai Permintaan)
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
       const delays = [1000, 2000, 4000, 8000, 16000];
       let success = false;
       let finalContent = "";
+      
+      // Menyimpan pesan error terakhir di luar scope try/catch untuk evaluasi selanjutnya
+      let lastErrorMessage = "";
 
       for (let i = 0; i < 6; i++) {
         try {
@@ -1054,12 +1058,16 @@ Hasilkan keseluruhan modul dalam format Markdown murni yang terstruktur rapi, el
           });
 
           if (!response.ok) {
-            // Tangkap jika terjadi invalid API Key
-            if (response.status === 400 || response.status === 403) {
+            // Tangkap jika terjadi invalid API Key atau model tidak ditemukan
+            if (response.status === 400 || response.status === 403 || response.status === 401) {
                 throw new Error("API_KEY_INVALID");
             }
+            if (response.status === 404) {
+                 throw new Error("MODEL_NOT_FOUND");
+            }
+            
             if (i < 5) { await new Promise(r => setTimeout(r, delays[i])); continue; }
-            throw new Error(`API Error: ${response.status}`);
+            throw new Error(`API Error Code: ${response.status}`);
           }
 
           const data = await response.json();
@@ -1067,24 +1075,33 @@ Hasilkan keseluruhan modul dalam format Markdown murni yang terstruktur rapi, el
           success = true;
           break;
         } catch (error) {
+          lastErrorMessage = error.message; // Simpan error sebelum retries berlanjut
+          
           if (error.message === "API_KEY_INVALID") {
              document.getElementById('loading-overlay').classList.add('hidden');
-             showToast("API Key salah atau tidak memiliki akses. Periksa kembali API Key Anda.", "error");
+             showToast("API Key salah atau tidak memiliki akses. Periksa kembali.", "error");
              setTimeout(() => openSettingsModal(), 1500);
              return;
           }
+          if (error.message === "MODEL_NOT_FOUND") {
+             document.getElementById('loading-overlay').classList.add('hidden');
+             showToast("Model 3.1-flash-lite tidak ditemukan di endpoint API Anda.", "error");
+             return;
+          }
+          
           if (i < 5) { await new Promise(r => setTimeout(r, delays[i])); continue; }
-          console.error(error);
+          console.error("Fetch failed:", error);
         }
       }
 
       document.getElementById('loading-overlay').classList.add('hidden');
       
+      // Evaluasi state setelah proses fetch selesai/gagal
       if(success && finalContent) {
           finalContent = finalContent.replace(/^```(markdown|md)\n/im, '').replace(/```\n*$/i, '');
           openPreview(finalContent);
-      } else if(error.message !== "API_KEY_INVALID") {
-          showToast("Gagal terhubung dan menghasilkan materi. Silakan coba lagi.", "error");
+      } else if (lastErrorMessage !== "API_KEY_INVALID" && lastErrorMessage !== "MODEL_NOT_FOUND") {
+          showToast(`Gagal terhubung: ${lastErrorMessage}. Silakan coba lagi.`, "error");
       }
     }
 
